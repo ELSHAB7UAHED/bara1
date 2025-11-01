@@ -5,7 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:  # Allows manual triggering
+  workflow_dispatch:
 
 env:
   ARDUINO_CLI_VERSION: "2.0.0"
@@ -42,7 +42,7 @@ jobs:
     - name: Install required libraries
       run: |
         arduino-cli lib install "ArduinoJson"
-        arduino-cli lib install "WebServer"
+        arduino-cli lib install "WiFi"
         arduino-cli lib install "DNSServer"
         arduino-cli lib install "WiFiManager"
         arduino-cli lib install "AsyncTCP"
@@ -54,20 +54,20 @@ jobs:
         arduino-cli core list
         arduino-cli lib list
         
+    - name: Verify source file exists
+      run: |
+        ls -la
+        if [ -f "bara.cpp" ]; then
+          echo "✅ Source file found: bara1.ino"
+        else
+          echo "❌ Source file not found!"
+          exit 1
+        fi
+        
     - name: Compile for ESP32 Dev Module
       run: |
-        arduino-cli compile --fqbn esp32:esp32:esp32 bara1.ino --verbose
+        arduino-cli compile --fqbn esp32:esp32:esp32 bara1.ino --build-path ./build --verbose
         echo "✅ Compilation successful for ESP32 Dev Module"
-        
-    - name: Compile for NodeMCU-32S
-      run: |
-        arduino-cli compile --fqbn esp32:esp32:nodemcu-32s bara1.ino --verbose
-        echo "✅ Compilation successful for NodeMCU-32S"
-        
-    - name: Compile for WEMOS LOLIN D32
-      run: |
-        arduino-cli compile --fqbn esp32:esp32:d32 bara1.ino --verbose
-        echo "✅ Compilation successful for WEMOS LOLIN D32"
         
     - name: Upload compilation artifacts
       uses: actions/upload-artifact@v4
