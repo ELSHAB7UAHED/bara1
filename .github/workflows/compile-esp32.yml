@@ -42,11 +42,9 @@ jobs:
     - name: Install required libraries
       run: |
         arduino-cli lib install "ArduinoJson"
-        arduino-cli lib install "WiFi"
-        arduino-cli lib install "DNSServer"
         arduino-cli lib install "WiFiManager"
-        arduino-cli lib install "AsyncTCP"
         arduino-cli lib install "ESP Async WebServer"
+        arduino-cli lib install "AsyncTCP"
         arduino-cli lib install "Ticker"
         
     - name: List installed boards and libraries
@@ -57,10 +55,12 @@ jobs:
     - name: Verify source file exists
       run: |
         ls -la
-        if [ -f "bara.cpp" ]; then
+        echo "Checking for .ino file..."
+        if [ -f "bara1.ino" ]; then
           echo "✅ Source file found: bara1.ino"
         else
-          echo "❌ Source file not found!"
+          echo "❌ bara1.ino not found! Available files:"
+          find . -name "*.ino" -o -name "*.cpp" -o -name "*.h"
           exit 1
         fi
         
