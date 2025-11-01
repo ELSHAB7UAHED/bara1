@@ -20,11 +20,14 @@ jobs:
       
     - name: Verify source file
       run: |
+        echo "📁 Repository contents:"
         ls -la
         if [ -f "bara1.ino" ]; then
           echo "✅ Source file found: bara1.ino"
         else
-          echo "❌ bara1.ino not found!"
+          echo "❌ bara1.ino not found in root directory!"
+          echo "Available files:"
+          find . -maxdepth 2 -type f -name "*.ino" | head -10
           exit 1
         fi
       
@@ -38,26 +41,29 @@ jobs:
         monitor_speed = 115200
         
         lib_deps = 
-            bblanchon/ArduinoJson@^6.21.3
-            ottowinter/ESPAsyncWebServer@^3.1.0
-            tzapu/WiFiManager@^2.0.16
+            bblanchon/ArduinoJson
+            ottowinter/ESPAsyncWebServer
+            tzapu/WiFiManager
         
         build_flags = 
             -Wno-unused-variable
             -Wno-unused-function
-            -Wno-sign-compare
         EOF
+        
+        echo "📋 PlatformIO configuration:"
+        cat platformio.ini
         
     - name: Compile with PlatformIO
       run: |
         platformio run
-        echo "✅ Compilation successful!"
         
-    - name: Upload firmware artifacts
+    - name: List build artifacts
+      run: |
+        echo "📦 Build artifacts:"
+        find .pio/build -name "*.bin" -o -name "*.elf" | head -10
+        
+    - name: Upload firmware
       uses: actions/upload-artifact@v4
       with:
-        name: platformio-firmware
-        path: |
-          .pio/build/**/*.bin
-          .pio/build/**/*.elf
-        retention-days: 7
+        name: firmware
+        path: .pio/build/**/*.bin
