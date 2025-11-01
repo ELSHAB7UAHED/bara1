@@ -1,4 +1,4 @@
-name: Compile ESP32 with PlatformIO
+name: Compile ESP32 Project
 
 on:
   push:
@@ -15,55 +15,40 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup PlatformIO
-      uses: platformio/setup-platformio@v2
-      
+    - name: Install Arduino CLI
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+        echo "$(pwd)/bin" >> $GITHUB_PATH
+        
+    - name: Configure Arduino CLI
+      run: |
+        arduino-cli config init
+        arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+        
+    - name: Install ESP32 core
+      run: |
+        arduino-cli core install esp32:esp32 --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+        
+    - name: Install required libraries
+      run: |
+        arduino-cli lib install "ArduinoJson"
+        arduino-cli lib install "WiFiManager"
+        arduino-cli lib install "ESP Async WebServer"
+        arduino-cli lib install "AsyncTCP"
+        
     - name: Verify source file
       run: |
-        echo "📁 Repository contents:"
+        echo "Current directory: $(pwd)"
         ls -la
         if [ -f "bara1.ino" ]; then
           echo "✅ Source file found: bara1.ino"
         else
-          echo "❌ bara1.ino not found in root directory!"
-          echo "Available files:"
-          find . -maxdepth 2 -type f -name "*.ino" | head -10
+          echo "❌ bara1.ino not found! Available files:"
+          find . -name "*.ino" -o -name "*.cpp" -o -name "*.h"
           exit 1
         fi
-      
-    - name: Create PlatformIO configuration
+        
+    - name: Compile project
       run: |
-        cat > platformio.ini << EOF
-        [env:esp32dev]
-        platform = espressif32
-        board = esp32dev
-        framework = arduino
-        monitor_speed = 115200
-        
-        lib_deps = 
-            bblanchon/ArduinoJson
-            ottowinter/ESPAsyncWebServer
-            tzapu/WiFiManager
-        
-        build_flags = 
-            -Wno-unused-variable
-            -Wno-unused-function
-        EOF
-        
-        echo "📋 PlatformIO configuration:"
-        cat platformio.ini
-        
-    - name: Compile with PlatformIO
-      run: |
-        platformio run
-        
-    - name: List build artifacts
-      run: |
-        echo "📦 Build artifacts:"
-        find .pio/build -name "*.bin" -o -name "*.elf" | head -10
-        
-    - name: Upload firmware
-      uses: actions/upload-artifact@v4
-      with:
-        name: firmware
-        path: .pio/build/**/*.bin
+        arduino-cli compile --fqbn esp32:esp32:esp32 bara1.ino --verbose
+        echo "✅ Compilation successful!"
